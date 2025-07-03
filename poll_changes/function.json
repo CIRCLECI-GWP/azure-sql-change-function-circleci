@@ -6,7 +6,7 @@
         "type": "sqlTrigger",
         "direction": "in",
         "tableName": "Sales",
-        "connectionStringSetting": "SQLCONNSTR_SQL_CONNECTION_STRING"
+        "connectionStringSetting": "SQL_CONNECTION_STRING"
       }
     ]
   }
