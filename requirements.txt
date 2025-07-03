@@ -1,2 +1,3 @@
 azure-functions
+azure-functions-sql-extension
 pyodbc
