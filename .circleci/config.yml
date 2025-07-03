@@ -1,0 +1,91 @@
+version: 2.1
+
+orbs:
+  node: circleci/node@7.1.0
+  azure-cli: circleci/azure-cli@1.2.0
+
+jobs:
+  deploy:
+    docker:
+      - image: cimg/python:3.13.5
+    steps:
+      - checkout
+
+      - node/install:
+          node-version: '18.17'
+
+      - azure-cli/install
+
+      - run:
+          name: Install Python dependencies
+          command: pip install -r requirements.txt
+
+      - run:
+          name: Azure CLI login
+          command: |
+            az login --service-principal \
+              -u $AZURE_CLIENT_ID \
+              -p $AZURE_CLIENT_SECRET \
+              --tenant $AZURE_TENANT_ID
+
+      - run:
+          name: Register Microsoft.Storage and Microsoft.Web provider
+          command: |
+            echo "Registering Microsoft.Storage resource provider..."
+            az provider register --namespace Microsoft.Storage
+
+            echo "Registering Microsoft.Web resource provider..."
+            az provider register --name Microsoft.Web
+
+      - run:
+          name: Ensure Function App + Storage Account exist
+          command: |
+            echo "Checking storage account..."
+            if ! az storage account show --name "$AZURE_STORAGE_ACCOUNT" --resource-group "$AZURE_RESOURCE_GROUP_NAME" &>/dev/null; then
+              echo "Storage account not found. Creating..."
+              az storage account create \
+                --name "$AZURE_STORAGE_ACCOUNT" \
+                --location "$AZURE_LOCATION" \
+                --resource-group "$AZURE_RESOURCE_GROUP_NAME" \
+                --sku Standard_LRS
+            else
+              echo "Storage account already exists."
+            fi
+
+            echo "Checking function app..."
+            if ! az functionapp show --name "$AZURE_FUNCTION_APP_NAME" --resource-group "$AZURE_RESOURCE_GROUP_NAME" &>/dev/null; then
+              echo "Function App not found. Creating..."
+              az functionapp create \
+                --name "$AZURE_FUNCTION_APP_NAME" \
+                --storage-account "$AZURE_STORAGE_ACCOUNT" \
+                --resource-group "$AZURE_RESOURCE_GROUP_NAME" \
+                --consumption-plan-location "$AZURE_LOCATION" \
+                --runtime python \
+                --functions-version 4 \
+                --os-type Linux
+
+            else
+              echo "Function App already exists."
+            fi
+
+      - run:
+          name: Enforce correct Python version
+          command: |
+            az functionapp config set \
+              --name "$AZURE_FUNCTION_APP_NAME" \
+              --resource-group "$AZURE_RESOURCE_GROUP_NAME" \
+              --linux-fx-version "PYTHON|3.10"
+
+      - run:
+          name: Deploy Azure Function App
+          command: |
+            npm install -g azure-functions-core-tools@4 --unsafe-perm true
+            func azure functionapp publish "$AZURE_FUNCTION_APP_NAME" --python --debug
+
+workflows:
+  deploy_main:
+    jobs:
+      - deploy:
+          filters:
+            branches:
+              only: master
