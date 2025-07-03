@@ -1,23 +1,11 @@
-import json
 import logging
+import json
 import azure.functions as func
 
-app = func.FunctionApp()
-
-@app.function_name(name="mytriggerfn")
-@app.sql_trigger(
-    arg_name="todo",
-    table_name="Sales",
-    connection_string_setting="SQL_CONNECTION_STRING"
-)
-def todo_trigger(todo: str) -> None:
+def main(changes: func.SqlRowList) -> None:
     try:
-        logging.info("⚡ SQL Trigger Fired")
-        logging.debug(f"Raw payload: {todo}")
-
-        changes = json.loads(todo)
+        logging.info(f"✅ SQL Trigger fired: {len(changes)} row(s) detected.")
         for row in changes:
-            logging.info(f"✔ Change: SaleID={row.get('Id')}, CarID={row.get('CarId')}, SalesmanID={row.get('SalesmanId')}, SaleDate={row.get('SaleDate')}")
+            logging.info(f"Change row: {row}")
     except Exception as e:
-        logging.error("❌ Error while processing SQL changes")
-        logging.error(str(e))
+        logging.error(f"❌ Error processing SQL changes: {str(e)}")
