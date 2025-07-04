@@ -1,5 +1,15 @@
+import json
 import logging
-import azure.functions as func
 
 def main(changes: str) -> None:
-    logging.warning("⚡ Function was triggered successfully")
+    try:
+        logging.info("⚡ SQL Trigger fired!")
+        logging.debug(f"Raw data: {changes}")
+        
+        rows = json.loads(changes)
+        for row in rows:
+            logging.info(row)
+            logging.info(f"✅ SaleID={row.get('Id')}, CarID={row.get('CarId')}")
+    except Exception as e:
+        logging.error("❌ Error processing SQL changes")
+        logging.error(str(e))
