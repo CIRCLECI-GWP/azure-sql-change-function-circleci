@@ -7,7 +7,7 @@ def main(changes: str) -> None:
         logging.info(f"Raw change payload: {changes}")
 
         rows = json.loads(changes)
-        logging.info(f"🔄 Number of changes: {len(rows)}")
+        logging.info(f"Number of changes: {len(rows)}")
 
         for row in rows:
             op = row.get("Operation")
