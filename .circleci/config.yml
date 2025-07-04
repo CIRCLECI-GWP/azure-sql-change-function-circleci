@@ -15,7 +15,11 @@ jobs:
           node-version: '18.17'
 
       - azure-cli/install
-      
+
+      - run:
+          name: Install Python dependencies
+          command: pip install -r requirements.txt
+
       - run:
           name: Azure CLI login
           command: |
