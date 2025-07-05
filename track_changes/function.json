@@ -1,0 +1,11 @@
+{
+    "bindings": [
+      {
+        "name": "changes",
+        "type": "sqlTrigger",
+        "direction": "in",
+        "tableName": "Sales",
+        "connectionStringSetting": "SQL_CONNECTION_STRING"
+      }
+    ]
+  }
